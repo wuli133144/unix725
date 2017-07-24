@@ -1,0 +1,14 @@
+{
+    "files.associations": {
+        "list.h": "c",
+        "queue.h": "c",
+        "sigcontext.h": "c",
+        "common.h": "c",
+        "rio_r_w.h": "c",
+        "utils.h": "c",
+        "http_ipc.h": "c",
+        "unistd.h": "c",
+        "stdio.h": "c",
+        "ipc.h": "c"
+    }
+}
