@@ -21,6 +21,9 @@
         "rio_test.c": "cpp",
         "rio_test1.c": "cpp",
         "para_test.c": "cpp",
-        "limits": "cpp"
+        "limits": "cpp",
+        "http_error.h": "c",
+        "unix_error.h": "c",
+        "time.h": "c"
     }
 }
