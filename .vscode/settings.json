@@ -12,6 +12,15 @@
         "ipc.h": "c",
         "http_module_error.c": "cpp",
         "rb_tree.c": "cpp",
-        "main.c": "cpp"
+        "main.c": "cpp",
+        "http_config.h": "c",
+        "client_test.c": "cpp",
+        "http_epoll.c": "cpp",
+        "serve_http.c": "cpp",
+        "query_string.c": "cpp",
+        "rio_test.c": "cpp",
+        "rio_test1.c": "cpp",
+        "para_test.c": "cpp",
+        "limits": "cpp"
     }
 }
