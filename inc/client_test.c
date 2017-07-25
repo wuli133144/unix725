@@ -16,11 +16,11 @@ int main(){
 //          }
    
     
-//    int fd=open_clientfd("127.0.0.1","8080");
+  int fd=open_clientfd("127.0.0.1","8080");
 
-//     if(fd<0){
-//          check("open clientfd");
-//     }
+    if(fd<0){
+          check("open clientfd");
+     }
     return 1;
    #endif
    #if 0

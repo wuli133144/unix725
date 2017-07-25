@@ -40,6 +40,11 @@ typedef struct _msg {
 
 
 
+
+//arr[0]：main=======>master
+//arr[1]:master=======>child
+//arr[2]:child==error==>master|main===>master tell master exit
+
 int arr[3];
 
 // ftok;

@@ -5,6 +5,24 @@
 #include "../../http_module/http_module.h"
 #include "../../utils/utils.h"
 
+
+void sig_quit(int sig){
+        
+}
+
+void sig_int_kill(int sig){
+        //tell master ===>main proc exit
+        msg_t msg;
+        int qid3;
+        msg.mtype=3;
+        strcpy(msg.mcontext,"EXIT");
+        qid3=arr[2];
+
+        send_queue(qid3,&msg);
+        exit(0);
+        return ;
+}
+
 int start(int argc, char **argv)
 {
 
@@ -29,11 +47,13 @@ int start(int argc, char **argv)
     msg.mtype=1;
     int qid;
     
-       /*@signal handler@*/
-       //signal(SIGPIPE,SIG_IGN);
-      // signal(SIGCHLD,SIG_DFL);
-       /*@signal hander end@*/
-    Init_sockpair();
+    /*@signal handler@*/
+    signal(SIGPIPE,SIG_IGN);
+    signal(SIGCHLD,SIG_DFL);
+    signal(SIGINT,sig_int_kill);
+    signal(SIGQUIT,sig_quit);
+    /*@signal hander end@*/
+   // Init_sockpair();
     init_main_proc();//init proc pool
     
     qid=open_queue();
@@ -41,7 +61,7 @@ int start(int argc, char **argv)
     /*@get socket filefd@*/
  
     printf("%s %s",sockpair.ip_addr,sockpair.port);
-    listenfd = open_listenfd(sockpair.ip_addr, sockpair.port);
+    listenfd = open_listenfd("127.0.0.1", "8080");
     Setnoblock(listenfd, O_NONBLOCK);
     /*@get socket filefd end@*/
 

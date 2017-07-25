@@ -194,6 +194,16 @@ pid_t notice_child() {
   return pid;
 }
 
+/*@TELL CHLD TO EXIT WHEN ACCEPT SIGINT SIGNAL@*/
+void tell_chld_exit(){
+        
+        processor_t *item=NULL;
+        SLIST_FOREACH(item,&PROC_POOL,entry){
+                   kill(item->pid,SIGINT);
+        }
+}
+/*@TELL CHLD TO EXIT WHEN ACCEPT SIGINT SIGNAL END@*/
+
 int common_handler_queue_impl(int msgid, int msgid2, int msgid3, msg_t *p) {
   int length, result;
   int pid=p->pid;
@@ -206,7 +216,19 @@ int common_handler_queue_impl(int msgid, int msgid2, int msgid3, msg_t *p) {
       send_queue(msgid2, p); // master===>child
     } else if ((result = msgrcv(msgid2, p, length, 2, IPC_NOWAIT)) != -1) {
       //
+       
     } else if ((result = msgrcv(msgid3, p, length, 3, IPC_NOWAIT)) !=
+               -1) { // child===>main
+      // error handler
+      char tell[BUFSIZE];
+      bzero(tell,BUFSIZE);
+      sscanf(p->mcontext, "%s", tell);
+      if(strcasecmp(tell,"exit")==0){
+                    //tell child signal sigint
+                    tell_chld_exit();
+                 
+      }
+    } else if ((result = msgrcv(msgid3, p, length, 4, IPC_NOWAIT)) !=
                -1) { // child===>main
       // error handler
       int childpid;
