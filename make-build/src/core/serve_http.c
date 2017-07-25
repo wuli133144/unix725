@@ -4,6 +4,6 @@
 
 int main(int argc, char **argv)
 {
-    Init_sockpair();
+    
     return start(argc, argv);
 }

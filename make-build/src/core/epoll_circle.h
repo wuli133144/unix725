@@ -1,7 +1,7 @@
 
 
-#include "../../inc/sock.h"
-#include "../../inc/epoll_inc.h"
+
+#include"http_task.h"
 #include "../../http_module/http_module.h"
 #include "../../utils/utils.h"
 
@@ -9,6 +9,9 @@ int start(int argc, char **argv)
 {
 
     /*@socket description@*/
+
+
+    
     int listenfd;
     int clientfd;
     socklen_t client_len;
@@ -22,10 +25,17 @@ int start(int argc, char **argv)
     struct epoll_event *pevent;
     struct epoll_event event;
     char buf[BUFSIZE];
-
-    /*@epoll var @*/
-
+    msg_t msg;
+    msg.mtype=1;
+    int qid;
+    
+   
+    init_main_proc();//init proc pool
+    
+    qid=open_queue();
+     /*@epoll var @*/
     /*@get socket filefd@*/
+    Init_sockpair();
     listenfd = open_listenfd(sockpair.ip_addr, sockpair.port);
     Setnoblock(listenfd, O_NONBLOCK);
     /*@get socket filefd end@*/
@@ -58,26 +68,28 @@ int start(int argc, char **argv)
             {
                 while (1)
                 {
-
+ 
                     clientfd = Accept(listenfd, (struct sockaddr *)&clientsock, (socklen_t *)&client_len);
                     Setnoblock(clientfd, O_NONBLOCK);
+                    
+                    sprintf(msg.mcontext,"%d",clientfd);
+                    
+                    send_queue(qid,&msg);
 
-                    event.events = EPOLLIN | EPOLLET; //
-                    event.data.fd = clientfd;
-                    Epoll_ctl(epfd, EPOLL_CTL_ADD, clientfd, &event); //add read event
-
+                    // event.events = EPOLLIN | EPOLLET; //
+                    // event.data.fd = clientfd;
+                    // Epoll_ctl(epfd, EPOLL_CTL_ADD, clientfd, &event); 
+                    
                     printf("connect fd=%d\n", clientfd);
                 }
                 continue;
             }
             else if (pevent[i].events & EPOLLIN)
-            { //Read
+            {   //Read
                 //int read_cnt=0;
                 //dup->http_module.c
-
-                http_module_handler_request(pevent[i].data.fd);
+                //http_module_handler_request(pevent[i].data.fd);
                 
-
                 event.events = EPOLLOUT | EPOLLET; //
                 event.data.fd = clientfd;
                 Epoll_ctl(epfd, EPOLL_CTL_ADD, clientfd, &event);

@@ -143,23 +143,26 @@ void jump_task_pool_obj() {
   __info("jump_task_pool_obj lock\n");
   pthread_mutex_trylock(&lock);
   rcv_queue(qid2, &msg, 2);
+  
    __info("jump_task_pool_obj unlock\n");
   
   sscanf(msg.mcontext, "%d", &g_oconnfd);
   pthread_mutex_unlock(&lock);
+  if(msg.pid==getpid()){
+  
+      pthread_create(&pid, NULL, pthread_handler, &g_oconnfd);
 
-  pthread_create(&pid, NULL, pthread_handler, &g_oconnfd);
+      for (;;) {
+          __info("jump_task_pool_obj in loop :lock\n");
+        rcv_queue(qid2, &msg, 2);
+        __info("jump_task_pool_obj in loop :unlock\n");
+        pthread_mutex_trylock(&lock);
+        sscanf(msg.mcontext, "%d", &g_oconnfd);
+        pthread_mutex_unlock(&lock);
+      }
 
-  for (;;) {
-      __info("jump_task_pool_obj in loop :lock\n");
-    rcv_queue(qid2, &msg, 2);
-     __info("jump_task_pool_obj in loop :unlock\n");
-    pthread_mutex_trylock(&lock);
-    sscanf(msg.mcontext, "%d", &g_oconnfd);
-    pthread_mutex_unlock(&lock);
+      pthread_join(pid, NULL);
   }
-
-  pthread_join(pid, NULL);
 }
 /*@child proc handler proc@*/
 
@@ -190,20 +193,19 @@ pid_t notice_child() {
       pid = item->pid;
     }
   }
+  item->nleft--;
   return pid;
 }
 
 int common_handler_queue_impl(int msgid, int msgid2, int msgid3, msg_t *p) {
   int length, result;
+  int pid=p->pid;
   length = sizeof(msg_t) - sizeof(long);
-   p->mtype=1;
-  while (1) {
+  while (1){
     if ((result = msgrcv(msgid, p, length, 1, IPC_NOWAIT)) !=
         -1) { // main=======>master
-      // err(1, "error:%s", "msgrcv");
-      // dosomething
-      // dosomething
       __info("common_handler_queue_impl");
+      p->pid=pid;
       send_queue(msgid2, p); // master===>child
     } else if ((result = msgrcv(msgid2, p, length, 2, IPC_NOWAIT)) != -1) {
       //
@@ -224,24 +226,26 @@ void init_manager_proc() {
   // get msg queue info from main proc
   int i = 0, qid, qid2, qid3, clientfd;
   msg_t msg;
+  pid_t pid;
 
   // create pool
   create_proc_pool();
     // create queue
   qid = open_queue();
   qid2 = open_queue2();
-  __info("open_queue123");
-  printf("qid=%d qid2=%d qid3=%d\n",qid,qid2,qid3);
   qid3 = open_queue3();
+  printf("qid=%d qid2=%d qid3=%d\n",qid,qid2,qid3);
+
 
   for (; i < NPROC_MAX_NUM; i++) {
-    pid_t pid;
+  
     pid = fork();
     if (pid < 0) {
       unix_error("fork failed!");
     } else if (pid == 0) {
-      __info("child =init_manager_proc");
+      printf("child head\n");
       jump_task_pool_obj();
+      printf("child end\n");
     }
     insert_pool_obj(pid);
   }
@@ -251,8 +255,12 @@ void init_manager_proc() {
   while (1) {
     // receive msg from main proc
     // lock()
+    printf("parent function head\n");
+    pid=notice_child();
+    msg.pid=pid;
     common_handler_queue_impl(qid, qid2, qid3, &msg);
     // unlock()
+    printf("parent function end");
   }
 }
 /*@init manager proc@*/

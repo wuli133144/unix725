@@ -24,6 +24,7 @@
         "limits": "cpp",
         "http_error.h": "c",
         "unix_error.h": "c",
-        "time.h": "c"
+        "time.h": "c",
+        "ipcbuf.h": "c"
     }
 }

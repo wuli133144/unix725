@@ -34,6 +34,7 @@
 typedef struct _msg {
   long mtype;
   char mcontext[BUFSIZE];
+  int pid;
 } msg_t;
 
 // ftok;
@@ -48,7 +49,7 @@ key_t Ftok() {
 // int    msgget ( key_t  key , int  msgflg );
 int open_queue() {
   int qid;
-  if ((qid == msgget(ftok(".", 1), O_CREAT | 0666)) == -1) {
+  if ((qid == msgget(0x223, IPC_CREAT | 0666)) == -1) {
          check("msgget");
   }
   return qid;
@@ -56,7 +57,7 @@ int open_queue() {
 
 int open_queue2(){
   int qid;
-   if ((qid == msgget(ftok(".", 2), O_CREAT | 0666)) == -1) {
+   if ((qid == msgget(0x226, IPC_CREAT | 0666)) == -1) {
          check("msget2");
   }
   return qid;
@@ -64,7 +65,7 @@ int open_queue2(){
 }
 int open_queue3(){
    int qid;
-   if ((qid == msgget(ftok(".", 3), O_CREAT | 0666)) == -1) {
+   if ((qid == msgget(0x227, IPC_CREAT | 0666)) == -1) {
              check("msgget3");
   }
   return qid;

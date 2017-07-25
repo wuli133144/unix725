@@ -4,9 +4,13 @@
 #if 1
 
 int main(){ 
+    
+    
     init_main_proc();
+    
 
-   return 1;
+   
+    return 1;
 
 }
 #endif
