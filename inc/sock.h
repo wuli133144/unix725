@@ -1,4 +1,9 @@
 
+
+#ifndef      __SOCKET__H
+
+#define      __SOCKET__H
+
 #include<sys/socket.h>
 #include<stdarg.h>
 #include<stddef.h>
@@ -278,4 +283,4 @@ int Sigprocmask(int how,const sigset_t *set,sigset_t *oset){
 /*@sigprocmsk@*/
 
 /*@memory operation@*/
-
+#endif 

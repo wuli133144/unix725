@@ -1,4 +1,7 @@
 
+#ifndef  IO_BASE__H
+#define  IO_BASE__H
+
 #include "sock.h"
 #include "epoll_inc.h"
 
@@ -156,3 +159,4 @@ void http_delete_event(int epollfd, int fd, int state) {
   return delete_event(epollfd, fd, state);
 }
 /*@http_delete_event end @*/
+#endif 

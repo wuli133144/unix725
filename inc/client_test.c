@@ -1,15 +1,10 @@
-#include"sock.h"
-
-#include"http_ipc.h"
 
 #include"http_task.h"
 
 #if 1
 
-int main(){
-    
-
-    printf("%d",open_max_fd());
+int main(){ 
+    init_main_proc();
 
    return 1;
 

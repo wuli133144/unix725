@@ -1,3 +1,5 @@
+#ifndef  HTTP__EPOLL_H
+#define  HTTP__EPOLL_H
 #include "http_io_base.h"
 
 #include "../utils/utils.h"
@@ -46,3 +48,5 @@ void Delete_event(int epollfd, int fd, int state) {
 
 //   return 0;
 // }
+
+#endif

@@ -9,11 +9,9 @@
 
 #include <sys/resource.h>
 #include<pthread.h>
-
 #include <err.h>
 
 #define NPROC_MAX_NUM 10
-
 #define MAX_FD_NUM 200
 
 #define PROC_POOL proc_pool
@@ -171,7 +169,7 @@ void jump_task_pool_obj(){
 /*@ handler_dead_processor@*/
   void handler_dead_processor(pid_t pid){
           pid_t pid;
-          processor_t *item;
+          
           delete_pool_obj(pid);
           pid=fork();
           if(pid<0){
@@ -205,13 +203,13 @@ int common_handler_queue_impl(int msgid,int msgid2,int msgid3,msg_t *p){
        length = sizeof(msg_t) - sizeof(long);
 
        while(1){
-              if ((result = msgrcv(msgid, p, length, 1, IPC_NOWAITS)) != -1) {//main=======>master
+              if ((result = msgrcv(msgid, p, length, 1, IPC_NOWAIT)) != -1) {//main=======>master
                      //err(1, "error:%s", "msgrcv");
                      //dosomething
                       send_queue(msgid2,&msg);//master===>child         
-                 }else if((result = msgrcv(msgid2, p, length, 2, IPC_NOWAITS))!=-1){
+                 }else if((result = msgrcv(msgid2, p, length, 2, IPC_NOWAIT))!=-1){
                      //
-                 }else if((result = msgrcv(msgid3, p, length, 3, IPC_NOWAITS))!=-1){//child===>main
+                 }else if((result = msgrcv(msgid3, p, length, 3, IPC_NOWAIT))!=-1){//child===>main
                        //error handler
                        int childpid;
                        sscanf(p->mcontext,"%d",&childpid);
