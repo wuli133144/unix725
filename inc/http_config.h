@@ -28,11 +28,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/resource.h>
-#include "../utils/utils.h"
+
+
 
 #define BUFSIZE 1024
 #define SIZE 100
 
 const char log_error_file[] = "../html/error.html";
 const char conf[] = "../conf/config";
-#endif
+#endif 

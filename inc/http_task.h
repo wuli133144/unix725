@@ -139,21 +139,18 @@ void jump_task_pool_obj() {
   msg.mtype=2;
   int qid2;
   qid2 = open_queue2();
-  printf("qid2=%d\n",qid2);
-  __info("jump_task_pool_obj lock\n");
-  pthread_mutex_trylock(&lock);
+
+
   rcv_queue(qid2, &msg, 2);
-  
-   __info("jump_task_pool_obj unlock\n");
-  
+  pthread_mutex_trylock(&lock);
   sscanf(msg.mcontext, "%d", &g_oconnfd);
   pthread_mutex_unlock(&lock);
   if(msg.pid==getpid()){
   
-      pthread_create(&pid, NULL, pthread_handler, &g_oconnfd);
+  pthread_create(&pid, NULL, pthread_handler, &g_oconnfd);
 
       for (;;) {
-          __info("jump_task_pool_obj in loop :lock\n");
+        __info("jump_task_pool_obj in loop :lock\n");
         rcv_queue(qid2, &msg, 2);
         __info("jump_task_pool_obj in loop :unlock\n");
         pthread_mutex_trylock(&lock);
@@ -217,6 +214,7 @@ int common_handler_queue_impl(int msgid, int msgid2, int msgid3, msg_t *p) {
       handler_dead_processor(childpid);
     }
   }
+  
 }
 
 /*@init manager proc@*/
@@ -224,30 +222,24 @@ int common_handler_queue_impl(int msgid, int msgid2, int msgid3, msg_t *p) {
 void init_manager_proc() {
 
   // get msg queue info from main proc
-  int i = 0, qid, qid2, qid3, clientfd;
+  int i = 0,clientfd;
   msg_t msg;
   pid_t pid;
 
   // create pool
   create_proc_pool();
-    // create queue
-  qid = open_queue();
-  qid2 = open_queue2();
-  qid3 = open_queue3();
-  printf("qid=%d qid2=%d qid3=%d\n",qid,qid2,qid3);
-
-
+  create_queue();
   for (; i < NPROC_MAX_NUM; i++) {
   
     pid = fork();
     if (pid < 0) {
       unix_error("fork failed!");
     } else if (pid == 0) {
-      printf("child head\n");
+     
       jump_task_pool_obj();
-      printf("child end\n");
+     
     }
-    insert_pool_obj(pid);
+      insert_pool_obj(pid);
   }
 
 
@@ -258,10 +250,13 @@ void init_manager_proc() {
     printf("parent function head\n");
     pid=notice_child();
     msg.pid=pid;
-    common_handler_queue_impl(qid, qid2, qid3, &msg);
+    common_handler_queue_impl(arr[0], arr[1], arr[2], &msg);
     // unlock()
     printf("parent function end");
   }
+  
+  destroy_queue();//destroy
+
 }
 /*@init manager proc@*/
 

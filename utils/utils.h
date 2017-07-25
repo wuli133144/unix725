@@ -121,14 +121,11 @@ typedef struct http_sock_pair
 
 sock_pair sockpair;
 /*@Getaddrconfig@*/
-// void Init_sockpair(){
-//       //st_sockpair->ip_addr
-//       sockpair.ip_addr=Calloc(1,SIZE);
-//       file_param(&sockpair);
-// }
+
 
 void file_param(sock_pair *st_sockpair)
-{
+{   
+    printf("%s\n",conf);
     FILE *fp = fopen(conf, "rw");
     if (fp == NULL)
     {
@@ -141,7 +138,7 @@ void file_param(sock_pair *st_sockpair)
     zero_to_buffer(ip);
     zero_to_buffer(info);
     zero_to_buffer(port);
-
+   
     while ((fgets(info, BUFSIZE, fp)) != NULL)
     {
         // printf("%s\n",info);

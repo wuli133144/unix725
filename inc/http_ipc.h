@@ -7,6 +7,7 @@
 #include <err.h>
 #include <fcntl.h>
 #include "http_error.h"
+#include "list.h"
 
 #define FILEPATH "."
 
@@ -37,6 +38,10 @@ typedef struct _msg {
   int pid;
 } msg_t;
 
+
+
+int arr[3];
+
 // ftok;
 key_t Ftok() {
   key_t rval;
@@ -49,24 +54,27 @@ key_t Ftok() {
 // int    msgget ( key_t  key , int  msgflg );
 int open_queue() {
   int qid;
-  if ((qid == msgget(0x223, IPC_CREAT | 0666)) == -1) {
+  if ((qid = msgget(0x223, IPC_CREAT | 0666)) == -1) {
          check("msgget");
   }
+ 
   return qid;
 }
 
 int open_queue2(){
   int qid;
-   if ((qid == msgget(0x226, IPC_CREAT | 0666)) == -1) {
+   if ((qid = msgget(0x226, IPC_CREAT | 0666)) == -1) {
          check("msget2");
   }
+
   return qid;
   
 }
 int open_queue3(){
    int qid;
-   if ((qid == msgget(0x227, IPC_CREAT | 0666)) == -1) {
+   if ((qid = msgget(0x227, IPC_CREAT| 0666)) == -1) {
              check("msgget3");
+             
   }
   return qid;
 }
@@ -106,6 +114,38 @@ int peek_message( int qid, long type )
   return(-1);
   }
   return(0);
+}
+
+/*@remove_message@*/
+int remove_message( int msgqid)
+{      
+       int rval;
+       if((rval=msgctl(msgqid,IPC_RMID,NULL)<0)){
+            check("msgqid");
+       }
+       return rval;
+
+}
+/*@remove_message@*/
+
+
+void create_queue(){
+  int qid;
+  qid=open_queue();
+  arr[0]=qid;
+  qid=open_queue2();
+  arr[1]=qid;
+  qid=open_queue3();
+  arr[2]=qid;
+}
+
+
+void destroy_queue(){
+    int i=0;
+    for(;i<3;i++){
+      
+        remove_message(arr[i]);
+    }
 }
 
 

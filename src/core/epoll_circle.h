@@ -1,7 +1,7 @@
 
 
-#include "../../inc/sock.h"
-#include "../../inc/epoll_inc.h"
+
+#include"../../inc/http_task.h"
 #include "../../http_module/http_module.h"
 #include "../../utils/utils.h"
 
@@ -9,6 +9,9 @@ int start(int argc, char **argv)
 {
 
     /*@socket description@*/
+
+
+    
     int listenfd;
     int clientfd;
     socklen_t client_len;
@@ -22,15 +25,22 @@ int start(int argc, char **argv)
     struct epoll_event *pevent;
     struct epoll_event event;
     char buf[BUFSIZE];
-        
-    /*@epollar @*/
+    msg_t msg;
+    msg.mtype=1;
+    int qid;
     
        /*@signal handler@*/
-       signal(SIGPIPE,SIG_IGN);
-       signal(SIGCHILD,SIG_DFL);
+       //signal(SIGPIPE,SIG_IGN);
+      // signal(SIGCHLD,SIG_DFL);
        /*@signal hander end@*/
-
+    Init_sockpair();
+    init_main_proc();//init proc pool
+    
+    qid=open_queue();
+     /*@epoll var @*/
     /*@get socket filefd@*/
+ 
+    printf("%s %s",sockpair.ip_addr,sockpair.port);
     listenfd = open_listenfd(sockpair.ip_addr, sockpair.port);
     Setnoblock(listenfd, O_NONBLOCK);
     /*@get socket filefd end@*/
@@ -43,7 +53,7 @@ int start(int argc, char **argv)
     pevent = (struct epoll_event *)Malloc(BUFSIZE * sizeof(struct epoll_event));
 
     epfd = Epoll_create(BUFSIZE);
-
+    
     Epoll_ctl(epfd, EPOLL_CTL_ADD, listenfd, &event);
     /*@epoll end@*/
 
@@ -63,15 +73,19 @@ int start(int argc, char **argv)
             {
                 while (1)
                 {
-
+ 
                     clientfd = Accept(listenfd, (struct sockaddr *)&clientsock, (socklen_t *)&client_len);
+                    __info("clientfd");
                     Setnoblock(clientfd, O_NONBLOCK);
+                    
+                    sprintf(msg.mcontext,"%d",clientfd);
+                    
+                    send_queue(qid,&msg);
 
-                    event.events = EPOLLIN | EPOLLET; //
-                    event.data.fd = clientfd;
-                    Epoll_ctl(epfd, EPOLL_CTL_ADD, clientfd, &event); //add read event
+                    // event.events = EPOLLIN | EPOLLET; //
+                    // event.data.fd = clientfd;
+                    // Epoll_ctl(epfd, EPOLL_CTL_ADD, clientfd, &event); 
                     printf("connect fd=%d\n", clientfd);
-
                 }
                 continue;
             }
@@ -80,30 +94,23 @@ int start(int argc, char **argv)
                 //int read_cnt=0;
                 //dup->http_module.c
                 //http_module_handler_request(pevent[i].data.fd);
-                //clientfd
-                event.events = EPOLLOUT|EPOLLET; //
+                event.events = EPOLLOUT | EPOLLET; //
                 event.data.fd = clientfd;
-                Epoll_ctl(epfd, EPOLL_CTL_MOD, clientfd, &event);
-
+                Epoll_ctl(epfd, EPOLL_CTL_ADD, clientfd, &event);
             }
             else if (pevent[i].events & EPOLLOUT)
             { //Write
-                       
-                http_module_handler_response(pevent[i].data.fd);
-                event.events = EPOLLOUT|EPOLLET; //
-                event.data.fd = clientfd;
-                Epoll_ctl(epfd, EPOLL_CTL_DEL, clientfd, &event);
-
             }
             else
-            { //default
+            {   //default
                 break;
             }
         }
-
+        
         free(pevent);
-        close(listefd);
+        close(listenfd);
         close(clientfd);
 
         return 0;
     }
+}

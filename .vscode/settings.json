@@ -25,6 +25,13 @@
         "http_error.h": "c",
         "unix_error.h": "c",
         "time.h": "c",
-        "ipcbuf.h": "c"
+        "ipcbuf.h": "c",
+        "http_module.c": "cpp",
+        "http_task.h": "c",
+        "conf.c": "cpp",
+        "resource.h": "c",
+        "string.h": "c",
+        "stdlib.h": "c",
+        "errno.h": "c"
     }
 }

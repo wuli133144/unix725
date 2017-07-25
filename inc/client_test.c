@@ -4,14 +4,37 @@
 #if 1
 
 int main(){ 
-    
-    
-    init_main_proc();
-    
-
+   // init_main_proc();
+   #if 1
+      
+//      FILE *fp=fopen(conf,"rw");
+//      if(fp==NULL){
+//          printf("FP");
+//          }
+//          else{
+//                printf("fp open failed");
+//          }
    
-    return 1;
+    
+//    int fd=open_clientfd("127.0.0.1","8080");
 
+//     if(fd<0){
+//          check("open clientfd");
+//     }
+    return 1;
+   #endif
+   #if 0
+
+         create_msg_queue();
+        //   if ((qid = msgget(0x223, IPC_CREAT |IPC_CREAT| 0666)) == -1) {
+        //   check("msgget");
+        //     }
+        //     printf("%d",qid);
+          sleep(5);
+         destroy();
+          
+    
+   #endif
 }
 #endif
 #if 0
