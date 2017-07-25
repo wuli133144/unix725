@@ -1,31 +1,17 @@
 #include"sock.h"
 
 #include"http_ipc.h"
-#if 0
+
+#include"http_task.h"
+
+#if 1
 
 int main(){
-   
-   key_t key;
-   
-   msg_t msg;
-   
-  
+    
 
-   memcpy(msg.context,"1234",sizeof("1234"));
-   key=Ftok();
-   int qid=open_queue(key);
-   
-   printf("%d",qid);
-    msg.mtype=1;
-   send_queue(qid,&msg);
+    printf("%d",open_max_fd());
 
-
-  
-
-  //int clientfd=open_clientfd("127.0.0.1","8080");
-  msg_t r_msg;
-  rcv_queue(qid,&r_msg,1);
-  printf("%s\n",r_msg.context);
+   return 1;
 
 }
 #endif

@@ -9,6 +9,9 @@
         "http_ipc.h": "c",
         "unistd.h": "c",
         "stdio.h": "c",
-        "ipc.h": "c"
+        "ipc.h": "c",
+        "http_module_error.c": "cpp",
+        "rb_tree.c": "cpp",
+        "main.c": "cpp"
     }
 }

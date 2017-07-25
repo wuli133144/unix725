@@ -185,7 +185,7 @@ struct name {								         \
 }
 
 #define SLIST_HEAD_INITIALIZER(head)					\
-	{ NULL }
+	{ 0,NULL }
  
 #define SLIST_ENTRY(type)						\
 struct {								\
