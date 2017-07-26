@@ -6,7 +6,7 @@
 #include "types.h"
 #include "http_error.h"
 #include "http_epoll.h"
-
+#include "sys/wait.h"
 #include <sys/resource.h>
 #include <pthread.h>
 #include <err.h>
@@ -136,29 +136,28 @@ void jump_task_pool_obj() {
   int i = 0;
   pthread_t pid;
   msg_t msg;
-  msg.mtype=2;
+  msg.mtype = 2;
   int qid2;
   qid2 = open_queue2();
-
 
   rcv_queue(qid2, &msg, 2);
   pthread_mutex_trylock(&lock);
   sscanf(msg.mcontext, "%d", &g_oconnfd);
   pthread_mutex_unlock(&lock);
-  if(msg.pid==getpid()){
-  
-  pthread_create(&pid, NULL, pthread_handler, &g_oconnfd);
+  if (msg.pid == getpid()) {
 
-      for (;;) {
-        __info("jump_task_pool_obj in loop :lock\n");
-        rcv_queue(qid2, &msg, 2);
-        __info("jump_task_pool_obj in loop :unlock\n");
-        pthread_mutex_trylock(&lock);
-        sscanf(msg.mcontext, "%d", &g_oconnfd);
-        pthread_mutex_unlock(&lock);
-      }
+    pthread_create(&pid, NULL, pthread_handler, &g_oconnfd);
 
-      pthread_join(pid, NULL);
+    for (;;) {
+      __info("jump_task_pool_obj in loop :lock\n");
+      rcv_queue(qid2, &msg, 2);
+      __info("jump_task_pool_obj in loop :unlock\n");
+      pthread_mutex_trylock(&lock);
+      sscanf(msg.mcontext, "%d", &g_oconnfd);
+      pthread_mutex_unlock(&lock);
+    }
+
+    pthread_join(pid, NULL);
   }
 }
 /*@child proc handler proc@*/
@@ -195,38 +194,38 @@ pid_t notice_child() {
 }
 
 /*@TELL CHLD TO EXIT WHEN ACCEPT SIGINT SIGNAL@*/
-void tell_chld_exit(){
-        
-        processor_t *item=NULL;
-        SLIST_FOREACH(item,&PROC_POOL,entry){
-                   kill(item->pid,SIGINT);
-        }
+void tell_chld_exit() {
+
+  processor_t *item = NULL;
+  SLIST_FOREACH(item, &PROC_POOL, entry) { kill(item->pid, SIGINT); }
 }
 /*@TELL CHLD TO EXIT WHEN ACCEPT SIGINT SIGNAL END@*/
 
 int common_handler_queue_impl(int msgid, int msgid2, int msgid3, msg_t *p) {
   int length, result;
-  int pid=p->pid;
+  int pid = p->pid;
   length = sizeof(msg_t) - sizeof(long);
-  while (1){
+  while (1) {
     if ((result = msgrcv(msgid, p, length, 1, IPC_NOWAIT)) !=
         -1) { // main=======>master
       __info("common_handler_queue_impl");
-      p->pid=pid;
+      p->pid = pid;
       send_queue(msgid2, p); // master===>child
     } else if ((result = msgrcv(msgid2, p, length, 2, IPC_NOWAIT)) != -1) {
       //
-       
+
     } else if ((result = msgrcv(msgid3, p, length, 3, IPC_NOWAIT)) !=
                -1) { // child===>main
       // error handler
       char tell[BUFSIZE];
-      bzero(tell,BUFSIZE);
+      int i;
+      bzero(tell, BUFSIZE);
       sscanf(p->mcontext, "%s", tell);
-      if(strcasecmp(tell,"exit")==0){
-                    //tell child signal sigint
-                    tell_chld_exit();
-                 
+      if (strcasecmp(tell, "exit") == 0) {
+        // tell child signal sigint
+        tell_chld_exit();
+        
+         waitpid(-2,&i,0);
       }
     } else if ((result = msgrcv(msgid3, p, length, 4, IPC_NOWAIT)) !=
                -1) { // child===>main
@@ -236,7 +235,6 @@ int common_handler_queue_impl(int msgid, int msgid2, int msgid3, msg_t *p) {
       handler_dead_processor(childpid);
     }
   }
-  
 }
 
 /*@init manager proc@*/
@@ -244,7 +242,7 @@ int common_handler_queue_impl(int msgid, int msgid2, int msgid3, msg_t *p) {
 void init_manager_proc() {
 
   // get msg queue info from main proc
-  int i = 0,clientfd;
+  int i = 0, clientfd;
   msg_t msg;
   pid_t pid;
 
@@ -252,33 +250,29 @@ void init_manager_proc() {
   create_proc_pool();
   create_queue();
   for (; i < NPROC_MAX_NUM; i++) {
-  
+
     pid = fork();
     if (pid < 0) {
       unix_error("fork failed!");
     } else if (pid == 0) {
-     
+
       jump_task_pool_obj();
-     
     }
-      insert_pool_obj(pid);
+    insert_pool_obj(pid);
   }
-
-
-   __info("manager open");
+  __info("manager open");
   while (1) {
     // receive msg from main proc
     // lock()
     printf("parent function head\n");
-    pid=notice_child();
-    msg.pid=pid;
+    pid = notice_child();
+    msg.pid = pid;
     common_handler_queue_impl(arr[0], arr[1], arr[2], &msg);
     // unlock()
     printf("parent function end");
   }
-  
-  destroy_queue();//destroy
 
+  destroy_queue(); // destroy
 }
 /*@init manager proc@*/
 

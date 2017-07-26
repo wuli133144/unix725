@@ -148,7 +148,7 @@ void create_queue(){
 void destroy_queue(){
     int i=0;
     for(;i<3;i++){
-      
+        printf("queue_id=%d\n",arr[i]);
         remove_message(arr[i]);
     }
 }

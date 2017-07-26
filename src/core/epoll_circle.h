@@ -7,18 +7,12 @@
 
 
 void sig_quit(int sig){
-        
+    exit(0);
+    return ;
 }
 
 void sig_int_kill(int sig){
-        //tell master ===>main proc exit
-        msg_t msg;
-        int qid3;
-        msg.mtype=3;
-        strcpy(msg.mcontext,"EXIT");
-        qid3=arr[2];
-
-        send_queue(qid3,&msg);
+      
         exit(0);
         return ;
 }
@@ -93,7 +87,8 @@ int start(int argc, char **argv)
             {
                 while (1)
                 {
- 
+                    printf("listenfd=%d\n",listenfd);
+                     
                     clientfd = Accept(listenfd, (struct sockaddr *)&clientsock, (socklen_t *)&client_len);
                     __info("clientfd");
                     Setnoblock(clientfd, O_NONBLOCK);
@@ -107,7 +102,7 @@ int start(int argc, char **argv)
                     // Epoll_ctl(epfd, EPOLL_CTL_ADD, clientfd, &event); 
                     printf("connect fd=%d\n", clientfd);
                 }
-                continue;
+               
             }
             else if (pevent[i].events & EPOLLIN)
             {   //Read
