@@ -107,16 +107,6 @@ void insert_pool(pid_t pid) {
   }
 }
 
-// void sig_handler(int sig) {
-//   msg_t msg;
-//   int connfd;
-//   msg.mtype = 2;
-//   int qid2 = open_queue2();
-//   rcv_queue(qid2, &msg, 2);
-//   sscanf(msg.mcontext, "%d", &connfd);
-//   // core
-//   Open_epoll(connfd);
-// }
 
 void *pthread_handler(void *argv) {
   int connfd = *((int *)argv);
@@ -135,17 +125,6 @@ int pipe_master_child[2];
 pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t conflock = PTHREAD_COND_INITIALIZER;
 
-/*@@*/
-
-void create_pipe(){
-       if((pipe(pipe_main_master))<0){
-           pipe(pipe_main_master);
-       }
-       if((pipe(pipe_master_child))<0){
-         pipe(pipe_master_child);
-       }
-       return;
-}
 
 // /*unix_domain*/
 // int S_pipe(int fd[2]){
@@ -173,7 +152,30 @@ int cross_ok(int pid){
 
 /*@child proc handler proc@*/
 void jump_task_pool_obj(int fd[2]) {
-      
+
+        int clientfd;
+        char buf[2];
+        __info();
+        int read_cnt=0;
+        while(1){
+            
+            if((read_cnt=Sock_fd_read(fd[0],buf,2,&clientfd))<0){
+                if(errno==EINTR)
+                {
+                  read_cnt=0;
+                  continue;
+                }
+                break;
+            }else if(read_cnt==0){
+                break;
+            }
+            
+            __info();
+            printf("rec_clientfd:%d\n",clientfd);
+
+            Open_epoll(clientfd);//extention to add fd implent
+
+        }
 
         
       
@@ -207,7 +209,7 @@ void jump_task_pool_obj(int fd[2]) {
 /*@child proc handler proc@*/
 
 /*@ handler_dead_processor@*/
-void handler_dead_processor(pid_t pid) {
+void handler_dead_processor(pid_t pid,int fd[2]) {
 
   delete_pool_obj(pid);
   pid = fork();
@@ -215,7 +217,7 @@ void handler_dead_processor(pid_t pid) {
     unix_error("fork failed");
   } else if (pid == 0) {
     // new child
-    jump_task_pool_obj();
+    jump_task_pool_obj(fd);
   }
   insert_pool(pid);
   return;
@@ -262,43 +264,7 @@ void set_status_ok(pid_t pid){
     }
 }
 
-int common_handler_queue_impl(int msgid, int msgid2, int msgid3, msg_t *p) {
-  
-  int length, result;
-  int pid;
-  int size;
-  char buffer[BUFSIZE];
-  bzero(buffer,BUFSIZE);
-  length = sizeof(msg_t) - sizeof(long);
-  while (1) {
-    
-    if ((result = msgrcv(msgid, p, length, 1, IPC_NOWAIT)) !=
-        -1) { // main=======>master
-             
-    } else if ((result = msgrcv(msgid2, p, length, 2, IPC_NOWAIT)) != -1) {
-     //
-    } else if ((result = msgrcv(msgid3, p, length, 3, IPC_NOWAIT))!=
-               -1) { // child===>main
-      // error handler
-      char tell[BUFSIZE];
-      int i;
-      bzero(tell, BUFSIZE);
-      sscanf(p->mcontext, "%s", tell);
-      if (strcasecmp(tell, "exit") == 0) {
-        // tell child signal sigint
-        tell_chld_exit();
-        
-         waitpid(-2,&i,0);
-      }
-    } else if ((result = msgrcv(msgid3, p, length, 4, IPC_NOWAIT)) !=
-               -1) { // child===>main
-      // error handler
-      int childpid;
-      sscanf(p->mcontext, "%d", &childpid);
-      handler_dead_processor(childpid);
-    }
-  }
-}
+
 
 /*@init manager proc@*/
 
@@ -307,7 +273,6 @@ void init_manager_proc(int fd[2]) {
   // get msg queue info from main proc
   int i = 0;
   pid_t pid;
-
 
   create_proc_pool();
 
@@ -327,21 +292,5 @@ void init_manager_proc(int fd[2]) {
 }
 /*@init manager proc@*/
 
-/*@start main processor@*/
-void init_main_proc() {
-  pid_t pid;
-
-  pid = fork();
-  if (pid < 0) {
-    unix_error("fork");
-  } else if (pid == 0) {
-
-    init_manager_proc();
-
-  }
-
-  return;
-}
-/*@start main processor@*/
 
 #endif

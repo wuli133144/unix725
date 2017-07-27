@@ -92,23 +92,21 @@ int start(int argc, char **argv)
             }
             else if (pevent[i].data.fd == listenfd)
             {        
-                   
+                   int write_cnt=0;
+                   char buf[2];
+
                    while(1){
                       printf("listenfd=%d\n",listenfd);
                       clientfd = Accept(listenfd, (struct sockaddr *)&clientsock, (socklen_t *)&client_len);
                       Setnoblock(clientfd, O_NONBLOCK);
                       __info();
-                      
-                      Sock_fd_write(unix_fd[1],NULL,0,clientfd);
-                      
-                     
 
+                      while((write_cnt=Sock_fd_write(unix_fd[1],buf,2,clientfd))<=0){
+                           printf("error ocurred! in sock_fd_write\n");
+                            Sock_fd_write(unix_fd[1],buf,2,clientfd);
+                      }
 
-                    
-
-                   }
-
-                   
+                   }    
             }
             else if (pevent[i].events & EPOLLIN)
             {   //Read

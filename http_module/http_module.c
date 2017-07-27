@@ -9,48 +9,49 @@ Connection: Keep-Alive
 */
 
 /*http handler*/
-void http_module_handler_request(void *arg)
+void http_module_handler_request(int epollfd,void *arg)
 {
 
       int clientfd = *((int *)(arg));
-
+      int ret_errno=0;
+      int fd;
+      int read_cnt;
+      int write_cnt;
       char buf[BUFSIZE];
       char filename[BUFSIZE];
       char method[BUFSIZE];
       char content_type[BUFSIZE];
+
       zero_to_buffer(buf);
       zero_to_buffer(filename);
       zero_to_buffer(method);
       zero_to_buffer(content_type);
-      // if(clientfd<0){unix_error("clientfd error");}
 
-      FILE *read_fp = Fdopen(clientfd, "r");
-      FILE *write_fd = Fdopen(dup(clientfd), "w");
-      Fgets(buf, BUFSIZE, read_fd);
-      if ((strstr(buf, "HTTP/")) == NULL)
-      {
-            http_module_error(write_fp);
-            close(clientfd);
-            fclose(read_fp);
-            fclose(write_fp);
-            return;
-            // exit(0);
-      }
-      SCPY(method, strtok(buf, '/'));//getSCPY(filename, strtok(NULL, '/'));
-      SCPY(content_type, Get_file_type(filename));
+       reterrno=accept_request(clientfd,filename);
+       switch(ret_errno){
+          
+          case HTTP_ERROR_METHOD:{
+              http_module_handler_response(filename,clientfd，HTTP_ERROR_METHOD);
+                break;
+          }
+          case HTTP_SUCCESS:{
+               http_module_handler_response(filename,clientfd，HTTP_SUCCESS);
+               break;
+          }
+          case HTTP_ERROR_NOT_FIND:{
+              http_module_handler_response(filename,clientfd，HTTP_ERROR_NOT_FIND);
 
-      if (((strcasecmp(method, "GET") != 0) || (strcasecmp(method, "POST") != 0)))
-      {
-            http_module_error(write_fp);
-            close(clientfd);
-            fclose(read_fp);
-            fclose(write_fp);
-            return;
-      }
+                break;
+          }
+          case HTTP_ERROR_REQUEST:{
+                 http_module_handler_response(filename,clientfd，HTTP_ERROR_REQUEST);
+                 break;
+          }
+          default:{
+                break;
+          }
+       }
 
-      fclose(read_fp);
-
-      http_module_handler_response(filename, write_fp, content_type);
 }
 /*http handler*/
 
@@ -61,60 +62,34 @@ Content-Type: text/html;charset=ISO-8859-1
 Content-Length: 12
 */
 
-void http_module_handler_response(const char *filename, FILE *fp, const char *filetype)
+void http_module_handler_response(const char *filename,int clientfd,int flag)
 {
-      int clientfd = *((int *)arg);
-      char buffer[BUFSIZE];
-      int read_cnt = 0;
-      char date_tmp[50];
-      char date[50];
-      int file_len;
-      char buffer[BUFSIZE];
-      char cont_len[50];
+           int fd;
+           if(flag==HTTP_SUCCESS){
+               if(filename!=NULL)
+                   fd=open(filename,O_RDWR);
+               response_ok(clientfd);
+             
+               while(!eof(fdopen(fd,"rw"))){
+                  while(read_cnt=http_rcv(fd,buf,BUFFSIZE)==-1){
+                        continue;
+                  }
+                  while((write_cnt=http_send(clientfd,buf,BUFFSIZE))==-1){
+                      continue;
+                  }
+               }
+           }else if(flag==HTTP_ERROR_NOT_FIND){
+                   unknow(clientfd);
+                   
+           }else if(flag==HTTP_ERROR_METHOD){
+                  error_method(clientfd);
+           }else if(flag==HTTP_ERROR_REQUEST){
+                 //
+                 wrong_path(clientfd);
+           }
 
-      char Content_Type[BUFSIZE];
-      char protocol[] = " HTTP/1.1 200 OK \r\n";
-
-      zero_to_buffer(date);
-      zero_to_buffer(date_tmp);
-      zero_to_buffer(buffer);
-      zero_to_buffer(Content_Type);
-
-      get_current_date(date_tmp, sizeof(date));
-      snprintf(date, strlen(date), "Date:%s\r\n", date);
-      get_file_length(log_error_file, &len);
-      snprintf(cont_len, strlen(cont_len), "Content-Length:%d\r\n", len);
-      sprintf(Content_Type, "Content-Type:%s\r\n", filetype);
-
-      fputs(protocol, fp);
-      fputs(date, fp);
-      fputs(cont_len, fp);
-      fputs(content_type, fp);
-      fflush(fp);
-
-      if (filename == NULL)
-      {
-            http_module_error(clientfd);
-            return;
-      }
-      FILE *Sendfp = fopen(filename, "r");
-      
-      if (Sendfp == NULL)
-      {
-            http_module_error(clientfd);
-      }
-
-      while ((Fgets(buffer, BUFSIZE, Sendfp)) != NULL)
-      {
-
-            fputs(buffer, fp);
-            fflush(fp);
-            // read_cnt=fread(buffer,BUFSIZE,1,Sendfp);
-            //fwrite(buffer,strlen(buffer),1,clientfd);
-      }
-      fflush(fp);
-      fclose(Sendfp);
-      
+               close(fd);
+               close(clientfd);
 }
 
 /*@getfiletype@*/

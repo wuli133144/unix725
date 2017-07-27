@@ -64,9 +64,9 @@ static void handle_events(int epollfd, struct epoll_event *events, int num,
     // if ((fd == listenfd) && (events[i].events & EPOLLIN))
     //    handle_accpet(epollfd, listenfd);
      if (events[i].events & EPOLLIN)
-      do_read(epollfd, fd, buf);
+              do_read(epollfd, fd, buf);
       else if (events[i].events & EPOLLOUT)
-      do_write(epollfd, fd, buf);
+              do_write(epollfd, fd, buf);
   }
 }
 static void handle_accpet(int epollfd, int listenfd) {
@@ -83,14 +83,26 @@ static void handle_accpet(int epollfd, int listenfd) {
   }
 }
 
+
+
+
+
+
 static void do_read(int epollfd, int fd, char *buf) {
   int nread;
-  nread = read(fd, buf, MAXSIZE);
-  if (nread == -1) {
+
+     FILE *fp=fdopen(fd,"rw");
+     while(fp==NULL){
+        fp=fdopen(fd,"rw");
+     }
+     http_module_handler_request(epollfd,&fd);
+  /*
+   if (nread == -1) {
     perror("read error:");
     close(fd);
     delete_event(epollfd, fd, EPOLLIN);
-  } else if (nread == 0) {
+
+   } else if (nread == 0) {
     fprintf(stderr, "client close.\n");
     close(fd);
     delete_event(epollfd, fd, EPOLLIN);
@@ -98,6 +110,8 @@ static void do_read(int epollfd, int fd, char *buf) {
     printf("read message is : %s", buf);
     modify_event(epollfd, fd, EPOLLOUT);
   }
+  */
+
 }
 
 static void do_write(int epollfd, int fd, char *buf) {
@@ -109,7 +123,7 @@ static void do_write(int epollfd, int fd, char *buf) {
     delete_event(epollfd, fd, EPOLLOUT);
   } else
     modify_event(epollfd, fd, EPOLLIN);
-  memset(buf, 0, MAXSIZE);
+  memset(buf, 0, MAXSIZE);s
 }
 
 static void add_event(int epollfd, int fd, int state) {

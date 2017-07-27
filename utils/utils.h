@@ -4,6 +4,8 @@
 #include "../inc/http_error.h"
 #include "../inc/http_config.h"
 
+#include<ctype.h>
+
 #define SCPY(a, b) strcpy(a, b)
 #define MMCP(a, b) memcpy(a, b, siseof(b))
 

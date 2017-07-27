@@ -41,6 +41,7 @@
         "pthread.h": "c",
         "signum.h": "c",
         "fcntl.h": "c",
-        "sock.h": "c"
+        "sock.h": "c",
+        "in.h": "c"
     }
 }
