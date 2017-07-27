@@ -10,6 +10,7 @@
 #include <sys/resource.h>
 #include <pthread.h>
 #include <err.h>
+#include<sys/file.h>
 
 #define NPROC_MAX_NUM 10
 #define MAX_FD_NUM 200
@@ -19,6 +20,7 @@
 typedef struct __processor__node {
   i_32 pid;
   i_32 nleft;
+  i_32 status;
   SLIST_ENTRY(__processor__node) entry;
 } processor_t;
 
@@ -46,6 +48,7 @@ processor_t *proc_alloc() {
   }
   rva->pid = -1;
   rva->nleft = MAX_FD_NUM;
+  rva->status=0;
   return rva;
 }
 
@@ -104,62 +107,103 @@ void insert_pool(pid_t pid) {
   }
 }
 
-void sig_handler(int sig) {
-  msg_t msg;
-  int connfd;
-  msg.mtype = 2;
-  int qid2 = open_queue2();
-  rcv_queue(qid2, &msg, 2);
-  sscanf(msg.mcontext, "%d", &connfd);
-  // core
-  Open_epoll(connfd);
-}
+// void sig_handler(int sig) {
+//   msg_t msg;
+//   int connfd;
+//   msg.mtype = 2;
+//   int qid2 = open_queue2();
+//   rcv_queue(qid2, &msg, 2);
+//   sscanf(msg.mcontext, "%d", &connfd);
+//   // core
+//   Open_epoll(connfd);
+// }
 
 void *pthread_handler(void *argv) {
   int connfd = *((int *)argv);
+  printf("pthread_handler=%d",connfd);
   Open_epoll(connfd);
+  pthread_detach(pthread_self());
   return NULL;
 }
 
 // global var
 
 int g_oconnfd;
+int pipe_main_master[2];
+int pipe_master_child[2];
 
 pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t conflock = PTHREAD_COND_INITIALIZER;
 
-/*@child proc handler proc@*/
-void jump_task_pool_obj() {
+/*@@*/
 
-  // signal(SIGUSR1,sig_handler);
-  // differ
-  int i = 0;
-  pthread_t pid;
-  msg_t msg;
-  msg.mtype = 2;
-  int qid2;
-  qid2 = open_queue2();
-
-  rcv_queue(qid2, &msg, 2);
-  pthread_mutex_trylock(&lock);
-  sscanf(msg.mcontext, "%d", &g_oconnfd);
-  pthread_mutex_unlock(&lock);
-  if (msg.pid == getpid()) {
-
-    pthread_create(&pid, NULL, pthread_handler, &g_oconnfd);
-
-    for (;;) {
-      __info("jump_task_pool_obj in loop :lock\n");
-      rcv_queue(qid2, &msg, 2);
-      __info("jump_task_pool_obj in loop :unlock\n");
-      pthread_mutex_trylock(&lock);
-      sscanf(msg.mcontext, "%d", &g_oconnfd);
-      pthread_mutex_unlock(&lock);
-    }
-
-    pthread_join(pid, NULL);
-  }
+void create_pipe(){
+       if((pipe(pipe_main_master))<0){
+           pipe(pipe_main_master);
+       }
+       if((pipe(pipe_master_child))<0){
+         pipe(pipe_master_child);
+       }
+       return;
 }
+
+// /*unix_domain*/
+// int S_pipe(int fd[2]){
+      
+//       return socketpair(AF_UNIX,SOCK_STREAM,0,fd);
+// }
+// /*unix end*/
+
+void sig_handler_child(int sig){
+     
+
+}
+
+int cross_ok(int pid){
+      processor_t *item;
+      SLIST_FOREACH(item,&PROC_POOL,entry)
+      {
+          if(item->pid=pid&&item->status==1){
+            return 0;
+          }
+      }
+      return -1;
+}
+
+
+/*@child proc handler proc@*/
+void jump_task_pool_obj(int fd[2]) {
+      
+
+        
+      
+      //  int childlistenfd=listenfd;
+      //  int clientfd;
+      //  char buffer[BUFSIZE];
+      //  int read_cnt;
+      //  pthread_t pid;
+      //  struct sockaddr_in sockclient;
+      //  socklen_t len=sizeof(struct sockaddr_in);
+       
+      //  zero_to_buffer(buffer);
+      //  signal(SIGINT,SIG_DFL);
+   
+      //  while(1){//child not exit
+           
+      //       if(cross_ok(getpid())!=0){
+      //         continue;
+      //       }
+
+      //      flock(childlistenfd,LOCK_EX);
+      //      clientfd=Accept(childlistenfd,(struct sockaddr *)&sockclient,&len);
+      //      flock(childlistenfd,LOCK_UN);
+
+      //      pthread_create(&pid,NULL,pthread_handler,&clientfd);
+           
+      //    }
+           
+}
+
 /*@child proc handler proc@*/
 
 /*@ handler_dead_processor@*/
@@ -180,16 +224,22 @@ void handler_dead_processor(pid_t pid) {
 // get best suitable proc
 pid_t notice_child() {
   processor_t *item = NULL;
+  processor_t *pre=NULL;
   pid_t pid;
   int max = SLIST_FIRST(&PROC_POOL)->nleft;
 
   SLIST_FOREACH(item, &PROC_POOL, entry) {
     if (item->nleft >= max) {
+     
       max = item->nleft;
       pid = item->pid;
+   
+      pre=item;
     }
   }
-  item->nleft--;
+ 
+  pre->nleft--;
+
   return pid;
 }
 
@@ -201,20 +251,33 @@ void tell_chld_exit() {
 }
 /*@TELL CHLD TO EXIT WHEN ACCEPT SIGINT SIGNAL END@*/
 
+
+void set_status_ok(pid_t pid){
+    processor_t *item=NULL;
+
+    SLIST_FOREACH(item,&PROC_POOL,entry){
+        if(item->pid==pid){
+          item->status=1;
+        }
+    }
+}
+
 int common_handler_queue_impl(int msgid, int msgid2, int msgid3, msg_t *p) {
+  
   int length, result;
-  int pid = p->pid;
+  int pid;
+  int size;
+  char buffer[BUFSIZE];
+  bzero(buffer,BUFSIZE);
   length = sizeof(msg_t) - sizeof(long);
   while (1) {
+    
     if ((result = msgrcv(msgid, p, length, 1, IPC_NOWAIT)) !=
         -1) { // main=======>master
-      __info("common_handler_queue_impl");
-      p->pid = pid;
-      send_queue(msgid2, p); // master===>child
+             
     } else if ((result = msgrcv(msgid2, p, length, 2, IPC_NOWAIT)) != -1) {
-      //
-
-    } else if ((result = msgrcv(msgid3, p, length, 3, IPC_NOWAIT)) !=
+     //
+    } else if ((result = msgrcv(msgid3, p, length, 3, IPC_NOWAIT))!=
                -1) { // child===>main
       // error handler
       char tell[BUFSIZE];
@@ -239,52 +302,44 @@ int common_handler_queue_impl(int msgid, int msgid2, int msgid3, msg_t *p) {
 
 /*@init manager proc@*/
 
-void init_manager_proc() {
+void init_manager_proc(int fd[2]) {
 
   // get msg queue info from main proc
-  int i = 0, clientfd;
-  msg_t msg;
+  int i = 0;
   pid_t pid;
 
-  // create pool
-  create_proc_pool();
-  create_queue();
-  for (; i < NPROC_MAX_NUM; i++) {
 
+  create_proc_pool();
+
+  for (; i < NPROC_MAX_NUM; i++) {
+    
     pid = fork();
     if (pid < 0) {
       unix_error("fork failed!");
     } else if (pid == 0) {
-
-      jump_task_pool_obj();
+      sleep(2);
+      jump_task_pool_obj(fd);
     }
-    insert_pool_obj(pid);
-  }
-  __info("manager open");
-  while (1) {
-    // receive msg from main proc
-    // lock()
-    printf("parent function head\n");
-    pid = notice_child();
-    msg.pid = pid;
-    common_handler_queue_impl(arr[0], arr[1], arr[2], &msg);
-    // unlock()
-    printf("parent function end");
+     insert_pool_obj(pid);
   }
 
-  destroy_queue(); // destroy
+  return;
 }
 /*@init manager proc@*/
 
 /*@start main processor@*/
 void init_main_proc() {
   pid_t pid;
+
   pid = fork();
   if (pid < 0) {
     unix_error("fork");
   } else if (pid == 0) {
+
     init_manager_proc();
+
   }
+
   return;
 }
 /*@start main processor@*/

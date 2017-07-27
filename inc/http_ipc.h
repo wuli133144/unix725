@@ -26,8 +26,8 @@
     exit(0);\
   }while(0)
 
- #define __info(msg) do{\
-  fprintf(stdout, "time:%s::%s::line number:%d:function:%s::filename:%s\n",__TIME__,msg\
+ #define __info() do{\
+  fprintf(stdout, "time:%s:line number:%d:function:%s::filename:%s\n",__TIME__\
    ,__LINE__,__func__,__FILE__);\
       }while(0)
 #endif 
@@ -48,9 +48,9 @@ typedef struct _msg {
 int arr[3];
 
 // ftok;
-key_t Ftok() {
+key_t Ftok(int i) {
   key_t rval;
-  if ((rval = ftok(FILEPATH, MODE)) == -1) {
+  if ((rval = ftok(FILEPATH, i)) == -1) {
       check("ftok");
   }
   return rval;
@@ -59,7 +59,7 @@ key_t Ftok() {
 // int    msgget ( key_t  key , int  msgflg );
 int open_queue() {
   int qid;
-  if ((qid = msgget(0x223, IPC_CREAT | 0666)) == -1) {
+  if ((qid=msgget(Ftok(1), IPC_CREAT | 0666)) == -1) {
          check("msgget");
   }
  
@@ -68,7 +68,7 @@ int open_queue() {
 
 int open_queue2(){
   int qid;
-   if ((qid = msgget(0x226, IPC_CREAT | 0666)) == -1) {
+   if ((qid=msgget(Ftok(2), IPC_CREAT | 0666)) == -1) {
          check("msget2");
   }
 
@@ -77,7 +77,7 @@ int open_queue2(){
 }
 int open_queue3(){
    int qid;
-   if ((qid = msgget(0x227, IPC_CREAT| 0666)) == -1) {
+   if ((qid=msgget(Ftok(3), IPC_CREAT| 0666)) == -1) {
              check("msgget3");
              
   }
@@ -153,6 +153,8 @@ void destroy_queue(){
     }
 }
 
+
+/*sempore_t*/
 
 
 

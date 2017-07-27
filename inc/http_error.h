@@ -14,7 +14,7 @@
 
 
 static void inline_unix_error(const char *msg) {
-  destroy_queue();
+ 
   fprintf(stderr, "time:%s:error::%s::%s::line number:%d:function:%s\n",__TIME__,msg, strerror(errno),__LINE__,__func__);
   exit(0);
 }

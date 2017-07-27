@@ -16,16 +16,27 @@ int main(){
 //          }
    
     
-  int fd=open_clientfd("127.0.0.1","8080");
+    char buf[BUFSIZE];
+    bzero(buf,BUFSIZE);
+
+    int fd=open_clientfd("127.0.0.1","8080");
 
     if(fd<0){
           check("open clientfd");
-     }
+   }
+    while((fgets(buf,BUFSIZE,stdin))!=NULL){
+            
+            write(fd,buf,BUFSIZE);
+            
+             read(fd,stdout,BUFSIZE);
+         
+    }
+
     return 1;
    #endif
    #if 0
 
-         create_msg_queue();
+         create_msg_queue();   
         //   if ((qid = msgget(0x223, IPC_CREAT |IPC_CREAT| 0666)) == -1) {
         //   check("msgget");
         //     }

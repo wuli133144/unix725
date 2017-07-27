@@ -27,17 +27,23 @@ static void modify_event(int epollfd, int fd, int state);
 /*@http_delete_event start@*/
 static void delete_event(int epollfd, int fd, int state);
 
+
+int epollfd;
+int flag_x=0;
+
 static void do_epoll(int listenfd) {
 
-  int epollfd;
-
+ 
   struct epoll_event events[EPOLLEVENTS];
   int ret;
+
   char buf[MAXSIZE];
   memset(buf, 0, MAXSIZE);
+  if(flag_x==0)
+      epollfd= Epoll_create(FDSIZE);
+     flag_x++;
 
-  epollfd = Epoll_create(FDSIZE);
-
+  printf("epoll flag_x=%d",flag_x);
   add_event(epollfd, listenfd, EPOLLIN);
   for (;;) {
 
@@ -55,11 +61,11 @@ static void handle_events(int epollfd, struct epoll_event *events, int num,
   for (i = 0; i < num; i++) {
     fd = events[i].data.fd;
 
-    if ((fd == listenfd) && (events[i].events & EPOLLIN))
-      handle_accpet(epollfd, listenfd);
-    else if (events[i].events & EPOLLIN)
+    // if ((fd == listenfd) && (events[i].events & EPOLLIN))
+    //    handle_accpet(epollfd, listenfd);
+     if (events[i].events & EPOLLIN)
       do_read(epollfd, fd, buf);
-    else if (events[i].events & EPOLLOUT)
+      else if (events[i].events & EPOLLOUT)
       do_write(epollfd, fd, buf);
   }
 }

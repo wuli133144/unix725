@@ -7,23 +7,24 @@
 
 
 void sig_quit(int sig){
+    destroy_queue();
     exit(0);
     return ;
 }
 
 void sig_int_kill(int sig){
-      
+        destroy_queue();
         exit(0);
         return ;
 }
+
+
+static int flag=0;
 
 int start(int argc, char **argv)
 {
 
     /*@socket description@*/
-
-
-    
     int listenfd;
     int clientfd;
     socklen_t client_len;
@@ -37,9 +38,9 @@ int start(int argc, char **argv)
     struct epoll_event *pevent;
     struct epoll_event event;
     char buf[BUFSIZE];
-    msg_t msg;
-    msg.mtype=1;
     int qid;
+    int unix_fd[2];
+    int ret;
     
     /*@signal handler@*/
     signal(SIGPIPE,SIG_IGN);
@@ -48,22 +49,28 @@ int start(int argc, char **argv)
     signal(SIGQUIT,sig_quit);
     /*@signal hander end@*/
    // Init_sockpair();
-    init_main_proc();//init proc pool
-    
-    qid=open_queue();
-     /*@epoll var @*/
     /*@get socket filefd@*/
+
+      
  
+    // create pool
+    ret=S_pipe(unix_fd);
+
+     while(ret<0){
+     ret=S_pipe(unix_fd);//create unix_do
+    }
+
+    init_manager_proc(unix_fd); //create processro pool   
+
     printf("%s %s",sockpair.ip_addr,sockpair.port);
     listenfd = open_listenfd("127.0.0.1", "8080");
-    Setnoblock(listenfd, O_NONBLOCK);
+   // Setnoblock(listenfd, O_NONBLOCK);
     /*@get socket filefd end@*/
 
     /*@epoll @*/
     bzero(buf, BUFSIZE);
     event.data.fd = listenfd;
-    event.events = EPOLLIN;
-
+    event.events = EPOLLIN|EPOLLET;
     pevent = (struct epoll_event *)Malloc(BUFSIZE * sizeof(struct epoll_event));
 
     epfd = Epoll_create(BUFSIZE);
@@ -84,25 +91,24 @@ int start(int argc, char **argv)
                 unix_error("there is something wrong with socketfd");
             }
             else if (pevent[i].data.fd == listenfd)
-            {
-                while (1)
-                {
-                    printf("listenfd=%d\n",listenfd);
+            {        
+                   
+                   while(1){
+                      printf("listenfd=%d\n",listenfd);
+                      clientfd = Accept(listenfd, (struct sockaddr *)&clientsock, (socklen_t *)&client_len);
+                      Setnoblock(clientfd, O_NONBLOCK);
+                      __info();
+                      
+                      Sock_fd_write(unix_fd[1],NULL,0,clientfd);
+                      
                      
-                    clientfd = Accept(listenfd, (struct sockaddr *)&clientsock, (socklen_t *)&client_len);
-                    __info("clientfd");
-                    Setnoblock(clientfd, O_NONBLOCK);
-                    
-                    sprintf(msg.mcontext,"%d",clientfd);
-                    
-                    send_queue(qid,&msg);
 
-                    // event.events = EPOLLIN | EPOLLET; //
-                    // event.data.fd = clientfd;
-                    // Epoll_ctl(epfd, EPOLL_CTL_ADD, clientfd, &event); 
-                    printf("connect fd=%d\n", clientfd);
-                }
-               
+
+                    
+
+                   }
+
+                   
             }
             else if (pevent[i].events & EPOLLIN)
             {   //Read

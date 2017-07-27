@@ -32,6 +32,15 @@
         "resource.h": "c",
         "string.h": "c",
         "stdlib.h": "c",
-        "errno.h": "c"
+        "errno.h": "c",
+        "libio.h": "c",
+        "http_epoll.h": "c",
+        "http_io_base.h": "c",
+        "msg.h": "c",
+        "epoll_inc.h": "c",
+        "pthread.h": "c",
+        "signum.h": "c",
+        "fcntl.h": "c",
+        "sock.h": "c"
     }
 }
