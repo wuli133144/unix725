@@ -42,6 +42,8 @@
         "signum.h": "c",
         "fcntl.h": "c",
         "sock.h": "c",
-        "in.h": "c"
+        "in.h": "c",
+        "http_module.h": "c",
+        "stdio2.h": "c"
     }
 }

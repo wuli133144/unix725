@@ -16,6 +16,8 @@
 #include <stddef.h>
 #include <stdarg.h>
 #include <err.h>
+#include "../http_module/http_module.h"
+
 #include "http_error.h"
 
 #define EPOLL_SIZE 100

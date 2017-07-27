@@ -12,6 +12,8 @@
 #include <err.h>
 #include<sys/file.h>
 
+#include "../http_module/http_module.h"
+
 #define NPROC_MAX_NUM 10
 #define MAX_FD_NUM 200
 
@@ -155,7 +157,9 @@ void jump_task_pool_obj(int fd[2]) {
 
         int clientfd;
         char buf[2];
+
         __info();
+       signal(SIGPIPE,SIG_IGN);
         int read_cnt=0;
         while(1){
             

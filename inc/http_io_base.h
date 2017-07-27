@@ -4,6 +4,8 @@
 
 #include "sock.h"
 #include "epoll_inc.h"
+#include "../http_module/http_module.h"
+// extern void http_module_handler_request(int fd,void *f);
 
 #define FDSIZE 1000
 #define EPOLLEVENTS 100
@@ -95,7 +97,7 @@ static void do_read(int epollfd, int fd, char *buf) {
      while(fp==NULL){
         fp=fdopen(fd,"rw");
      }
-     http_module_handler_request(epollfd,&fd);
+     http_module_handler_request(epollfd,(void *)&fd);
   /*
    if (nread == -1) {
     perror("read error:");
@@ -123,7 +125,7 @@ static void do_write(int epollfd, int fd, char *buf) {
     delete_event(epollfd, fd, EPOLLOUT);
   } else
     modify_event(epollfd, fd, EPOLLIN);
-  memset(buf, 0, MAXSIZE);s
+    memset(buf, 0, MAXSIZE);
 }
 
 static void add_event(int epollfd, int fd, int state) {

@@ -1,11 +1,11 @@
 #include "http_module.h"
 
 /*
- GET / HTTP/1.1
-Host: www.baidu.com
-User-Agent: Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.7.6)
-Gecko/20050225 Firefox/1.0.1
-Connection: Keep-Alive
+      GET / HTTP/1.1
+      Host: www.baidu.com
+      User-Agent: Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.7.6)
+      Gecko/20050225 Firefox/1.0.1
+      Connection: Keep-Alive
 */
 
 /*http handler*/
@@ -28,6 +28,7 @@ void http_module_handler_request(int epollfd,void *arg)
       zero_to_buffer(content_type);
 
        reterrno=accept_request(clientfd,filename);
+       
        switch(ret_errno){
           
           case HTTP_ERROR_METHOD:{

@@ -97,6 +97,7 @@ int start(int argc, char **argv)
 
                    while(1){
                       printf("listenfd=%d\n",listenfd);
+                      //start
                       clientfd = Accept(listenfd, (struct sockaddr *)&clientsock, (socklen_t *)&client_len);
                       Setnoblock(clientfd, O_NONBLOCK);
                       __info();
